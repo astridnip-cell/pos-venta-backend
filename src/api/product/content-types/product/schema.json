@@ -60,6 +60,14 @@
       "type": "integer",
       "default": 0
     },
+    "stock_minimo": {
+      "type": "integer",
+      "default": 10
+    },
+    "alerta_stock": {
+      "type": "boolean",
+      "default": false
+    },
     "featured": {
       "type": "boolean",
       "default": false

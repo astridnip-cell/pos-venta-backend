@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "admins",
+  "info": {
+    "singularName": "admin",
+    "pluralName": "admins",
+    "displayName": "Admin"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Nombre": {
+      "type": "text"
+    },
+    "Cargo": {
+      "type": "string"
+    },
+    "Email": {
+      "type": "email"
+    },
+    "Cel": {
+      "type": "biginteger"
+    },
+    "Password": {
+      "type": "password"
+    }
+  }
+}

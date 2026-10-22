@@ -430,6 +430,35 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAdminAdmin extends Struct.CollectionTypeSchema {
+  collectionName: 'admins';
+  info: {
+    displayName: 'Admin';
+    pluralName: 'admins';
+    singularName: 'admin';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    Cargo: Schema.Attribute.String;
+    Cel: Schema.Attribute.BigInteger;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Email: Schema.Attribute.Email;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::admin.admin'> &
+      Schema.Attribute.Private;
+    Nombre: Schema.Attribute.Text;
+    Password: Schema.Attribute.Password;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
@@ -504,6 +533,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    alerta_stock: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     category: Schema.Attribute.Relation<'oneToOne', 'api::category.category'>;
     colors: Schema.Attribute.JSON;
     createdAt: Schema.Attribute.DateTime;
@@ -530,6 +560,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     sizes: Schema.Attribute.JSON;
     slug: Schema.Attribute.UID<'name'>;
     stock: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    stock_minimo: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<10>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1047,6 +1078,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::admin.admin': ApiAdminAdmin;
       'api::category.category': ApiCategoryCategory;
       'api::order.order': ApiOrderOrder;
       'api::product.product': ApiProductProduct;
