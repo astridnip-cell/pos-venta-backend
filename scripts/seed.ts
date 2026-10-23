@@ -10,8 +10,8 @@
  */
 
 const STRAPI_URL = "http://localhost:1337";
-const ADMIN_EMAIL = "admin@velora.com";
-const ADMIN_PASSWORD = "Copito9290";
+const ADMIN_EMAIL = process.env.SEED_EMAIL || "";
+const ADMIN_PASSWORD = process.env.SEED_PASSWORD || "";
 
 // ============================================================
 // DATOS BASE
