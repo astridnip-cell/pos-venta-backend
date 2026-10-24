@@ -505,20 +505,34 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     customerEmail: Schema.Attribute.Email & Schema.Attribute.Required;
     customerName: Schema.Attribute.String & Schema.Attribute.Required;
+    customerPhone: Schema.Attribute.String;
     items: Schema.Attribute.JSON;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
       Schema.Attribute.Private;
     orderNumber: Schema.Attribute.UID;
+    paymentStatus: Schema.Attribute.Enumeration<
+      ['pending', 'approved', 'declined', 'voided', 'error']
+    > &
+      Schema.Attribute.DefaultTo<'pending'>;
     publishedAt: Schema.Attribute.DateTime;
+    reference: Schema.Attribute.String;
     shippingAddress: Schema.Attribute.Text & Schema.Attribute.Required;
+    shippingCity: Schema.Attribute.String;
+    shippingCost: Schema.Attribute.Decimal;
     statusOrder: Schema.Attribute.Enumeration<
       ['pending', 'paid', 'shipped', 'delivered']
     >;
+    subtotal: Schema.Attribute.Decimal;
     total: Schema.Attribute.Decimal & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    wompiTransactionId: Schema.Attribute.String;
   };
 }
 

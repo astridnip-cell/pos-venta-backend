@@ -41,6 +41,40 @@
     },
     "items": {
       "type": "json"
+    },
+    "reference": {
+      "type": "string"
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "approved",
+        "declined",
+        "voided",
+        "error"
+      ],
+      "default": "pending"
+    },
+    "wompiTransactionId": {
+      "type": "string"
+    },
+    "customerPhone": {
+      "type": "string"
+    },
+    "shippingCity": {
+      "type": "string"
+    },
+    "subtotal": {
+      "type": "decimal"
+    },
+    "shippingCost": {
+      "type": "decimal"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
     }
   }
 }
