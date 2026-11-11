@@ -15,9 +15,27 @@ export function sha256(text: string): string {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
 
-export function isWompiConfigured(): boolean {
-  return Boolean(process.env.WOMPI_PUBLIC_KEY && process.env.WOMPI_INTEGRITY_SECRET);
+// Los valores de ejemplo de .env.example (pub_test_xxxx...) no son llaves reales
+function isPlaceholder(value: string | undefined): boolean {
+  return !value || /x{6,}/i.test(value);
 }
+
+export function isWompiConfigured(): boolean {
+  return !isPlaceholder(process.env.WOMPI_PUBLIC_KEY) && !isPlaceholder(process.env.WOMPI_INTEGRITY_SECRET);
+}
+
+/**
+ * Modo de pago simulado (respaldo para pruebas mientras no haya llaves de Wompi).
+ * Se activa con PAYMENT_MODE=simulado en el .env, pero SOLO si las llaves de Wompi
+ * no están puestas: en cuanto pegues llaves reales de pruebas, se usa Wompi.
+ * El pedido, el estado del pago y el stock se actualizan igual que con un pago real.
+ */
+export function isSimulatedPayment(): boolean {
+  const wanted = String(process.env.PAYMENT_MODE ?? '').toLowerCase() === 'simulado';
+  return wanted && !isWompiConfigured();
+}
+
+export const SIMULATED_PREFIX = 'SIM-';
 
 function apiBase(): string {
   return process.env.WOMPI_ENV === 'production'

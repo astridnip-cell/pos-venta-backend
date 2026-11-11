@@ -21,6 +21,12 @@ export default {
       handler: 'order.verify',
     },
     {
+      // Solo responde con PAYMENT_MODE=simulado en el .env (pruebas sin Wompi)
+      method: 'POST',
+      path: '/orders/simulate-payment',
+      handler: 'order.simulatePayment',
+    },
+    {
       // Wompi llama a esta ruta sin sesión; se valida con la firma del evento.
       method: 'POST',
       path: '/orders/wompi-webhook',

@@ -12,8 +12,10 @@ import { factories } from '@strapi/strapi';
 import {
   buildCheckoutUrl,
   fetchTransaction,
+  isSimulatedPayment,
   isWompiConfigured,
   paymentStatusFromWompi,
+  SIMULATED_PREFIX,
   verifyEventChecksum,
 } from '../../../utils/wompi';
 
@@ -133,8 +135,12 @@ export default factories.createCoreController(ORDER_UID, ({ strapi }) => ({
     const user = ctx.state.user;
     if (!user) return ctx.unauthorized('Debes iniciar sesión para comprar.');
 
-    if (!isWompiConfigured()) {
-      strapi.log.error('Wompi no está configurado: faltan WOMPI_PUBLIC_KEY o WOMPI_INTEGRITY_SECRET en .env');
+    const simulated = isSimulatedPayment();
+    if (!simulated && !isWompiConfigured()) {
+      strapi.log.error(
+        'Wompi no está configurado: faltan llaves reales en .env (WOMPI_PUBLIC_KEY, WOMPI_INTEGRITY_SECRET). ' +
+          'Para probar sin Wompi agrega PAYMENT_MODE=simulado al .env y reinicia Strapi.'
+      );
       return ctx.internalServerError('La pasarela de pagos no está configurada.');
     }
 
@@ -234,13 +240,15 @@ export default factories.createCoreController(ORDER_UID, ({ strapi }) => ({
       status: 'published',
     });
 
-    // 4. Dirección de pago en Wompi
+    // 4. Dirección de pago: Wompi o la pantalla de pago simulado de la tienda
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const checkoutUrl = buildCheckoutUrl({
-      reference: orderNumber,
-      totalCop: total,
-      redirectUrl: `${frontendUrl}/gracias?ref=${encodeURIComponent(orderNumber)}`,
-    });
+    const checkoutUrl = simulated
+      ? `${frontendUrl}/pago-simulado?ref=${encodeURIComponent(orderNumber)}`
+      : buildCheckoutUrl({
+          reference: orderNumber,
+          totalCop: total,
+          redirectUrl: `${frontendUrl}/gracias?ref=${encodeURIComponent(orderNumber)}`,
+        });
 
     return ctx.send({ orderNumber, subtotal, shippingCost, total, checkoutUrl });
   },
@@ -263,9 +271,23 @@ export default factories.createCoreController(ORDER_UID, ({ strapi }) => ({
     const user = ctx.state.user;
     if (!user) return ctx.unauthorized('Debes iniciar sesión.');
 
+    // Pago simulado: no se consulta a Wompi, el resultado ya está guardado en el pedido
+    const transactionId = String(ctx.params.transactionId);
+    if (transactionId.startsWith(SIMULATED_PREFIX)) {
+      if (!isSimulatedPayment()) return ctx.notFound('No se encontró el pago.');
+      const simOrder: any = await (strapi as any).documents(ORDER_UID).findFirst({
+        filters: { wompiTransactionId: transactionId },
+        status: 'published',
+        populate: { user: true },
+      });
+      if (!simOrder) return ctx.notFound('No se encontró el pedido de este pago.');
+      if (simOrder.user?.id !== user.id) return ctx.forbidden('Este pedido no es tuyo.');
+      return ctx.send({ data: publicOrder(simOrder) });
+    }
+
     let transaction: any;
     try {
-      transaction = await fetchTransaction(String(ctx.params.transactionId));
+      transaction = await fetchTransaction(transactionId);
     } catch (error) {
       strapi.log.error(`No se pudo consultar la transacción en Wompi: ${error}`);
       return ctx.internalServerError('No se pudo consultar el pago. Intenta de nuevo en unos segundos.');
@@ -318,5 +340,44 @@ export default factories.createCoreController(ORDER_UID, ({ strapi }) => ({
 
     // Wompi solo necesita un 200 para dejar de reintentar
     return ctx.send({ ok: true });
+  },
+
+  /**
+   * Pago simulado (solo con PAYMENT_MODE=simulado).
+   * Reemplaza a Wompi en pruebas: el cliente elige aprobar o rechazar y el pedido
+   * se actualiza con la misma lógica de un pago real (estado del pago y stock).
+   */
+  async simulatePayment(ctx) {
+    if (!isSimulatedPayment()) return ctx.notFound();
+
+    const user = ctx.state.user;
+    if (!user) return ctx.unauthorized('Debes iniciar sesión.');
+
+    const { reference, approve } = (ctx.request.body ?? {}) as any;
+    if (!reference) return ctx.badRequest('Falta la referencia del pedido.');
+
+    const order: any = await (strapi as any).documents(ORDER_UID).findFirst({
+      filters: { reference: String(reference) },
+      status: 'published',
+      populate: { user: true },
+    });
+    if (!order) return ctx.notFound('No se encontró el pedido.');
+    if (order.user?.id !== user.id) return ctx.forbidden('Este pedido no es tuyo.');
+
+    // Si ya estaba pagado no se vuelve a cobrar ni a descontar stock
+    if (order.paymentStatus === 'approved') {
+      return ctx.send({ transactionId: order.wompiTransactionId, paymentStatus: 'approved' });
+    }
+
+    const transaction = {
+      id: `${SIMULATED_PREFIX}${Date.now().toString(36).toUpperCase()}`,
+      status: approve ? 'APPROVED' : 'DECLINED',
+    };
+    await applyPaymentResult(strapi, order, transaction);
+
+    return ctx.send({
+      transactionId: transaction.id,
+      paymentStatus: paymentStatusFromWompi(transaction.status),
+    });
   },
 }));

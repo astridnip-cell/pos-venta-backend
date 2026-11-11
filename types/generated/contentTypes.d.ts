@@ -548,7 +548,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   };
   attributes: {
     alerta_stock: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    category: Schema.Attribute.Relation<'oneToOne', 'api::category.category'>;
+    category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
     colors: Schema.Attribute.JSON;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

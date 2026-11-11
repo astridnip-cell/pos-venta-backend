@@ -25,6 +25,7 @@ const ROLE_ACTIONS: Record<string, string[]> = {
     'api::order.order.checkout',
     'api::order.order.mine',
     'api::order.order.verify',
+    'api::order.order.simulatePayment',
   ],
 };
 
