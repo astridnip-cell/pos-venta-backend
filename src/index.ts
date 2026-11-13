@@ -63,6 +63,38 @@ async function syncApiPermissions(strapi: Core.Strapi, roleType: string, allowed
   }
 }
 
+/**
+ * Permisos que el rol Administrador necesita para el panel de administración:
+ *  - panel.access: el panel comprueba que quien inicia sesión es Administrador.
+ *  - users-permissions.user.me: consultar su propio usuario.
+ *  - upload: subir la imagen al crear o editar un producto.
+ * Solo se AGREGAN si faltan; nunca se quita ningún permiso del Administrador.
+ */
+const ADMIN_PLUGIN_ACTIONS = [
+  'api::panel.panel.access',
+  'plugin::users-permissions.user.me',
+  'plugin::upload.content-api.upload',
+];
+
+async function ensureAdminPluginPermissions(strapi: Core.Strapi) {
+  const role = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'administrador' } });
+  if (!role) {
+    strapi.log.warn('[permisos] No se encontró el rol "administrador".');
+    return;
+  }
+
+  const permissionQuery = strapi.db.query('plugin::users-permissions.permission');
+  let added = 0;
+  for (const action of ADMIN_PLUGIN_ACTIONS) {
+    const exists = await permissionQuery.findOne({ where: { action, role: { id: role.id } } });
+    if (!exists) {
+      await permissionQuery.create({ data: { action, role: role.id } });
+      added++;
+    }
+  }
+  if (added) strapi.log.info(`[permisos] Rol "administrador": ${added} permisos de plugins agregados.`);
+}
+
 export default {
   /**
    * An asynchronous register function that runs before
@@ -81,6 +113,11 @@ export default {
       } catch (error) {
         strapi.log.error(`[permisos] No se pudieron actualizar los permisos de "${roleType}": ${error}`);
       }
+    }
+    try {
+      await ensureAdminPluginPermissions(strapi);
+    } catch (error) {
+      strapi.log.error(`[permisos] No se pudieron agregar los permisos del Administrador: ${error}`);
     }
   },
 };
