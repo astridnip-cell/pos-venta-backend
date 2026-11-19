@@ -1,0 +1,36 @@
+{
+  "kind": "collectionType",
+  "collectionName": "covers",
+  "info": {
+    "singularName": "cover",
+    "pluralName": "covers",
+    "displayName": "Portada",
+    "description": "Foto principal de la página de inicio, programada por semana"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "maxLength": 80
+    },
+    "subtitle": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    },
+    "weekStart": {
+      "type": "date",
+      "required": true,
+      "unique": true
+    }
+  }
+}

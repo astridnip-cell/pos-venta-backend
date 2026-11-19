@@ -3,7 +3,7 @@ import type { Core } from '@strapi/strapi';
 /**
  * Permisos de la API por rol (solo las acciones "api::...", las de plugins no se tocan).
  *
- *  - Public (sin sesión):   solo puede VER productos y categorías.
+ *  - Public (sin sesión):   solo puede VER productos, categorías y portadas de inicio.
  *  - Authenticated (clientes): lo mismo, más crear su pedido (checkout), ver los suyos (mine)
  *                              y consultar el resultado de su pago (verify).
  *  - Administrador: no se modifica, conserva los permisos que ya le diste.
@@ -16,6 +16,7 @@ const VIEW_CATALOG = [
   'api::product.product.findOne',
   'api::category.category.find',
   'api::category.category.findOne',
+  'api::cover.cover.find',
 ];
 
 const ROLE_ACTIONS: Record<string, string[]> = {
@@ -66,12 +67,19 @@ async function syncApiPermissions(strapi: Core.Strapi, roleType: string, allowed
 /**
  * Permisos que el rol Administrador necesita para el panel de administración:
  *  - panel.access: el panel comprueba que quien inicia sesión es Administrador.
+ *  - cover.*: crear, ver y borrar las portadas semanales de la página de inicio.
  *  - users-permissions.user.me: consultar su propio usuario.
  *  - upload: subir la imagen al crear o editar un producto.
  * Solo se AGREGAN si faltan; nunca se quita ningún permiso del Administrador.
  */
 const ADMIN_PLUGIN_ACTIONS = [
   'api::panel.panel.access',
+  // Portadas de la página de inicio (sección "Portadas" del panel)
+  'api::cover.cover.find',
+  'api::cover.cover.findOne',
+  'api::cover.cover.create',
+  'api::cover.cover.update',
+  'api::cover.cover.delete',
   'plugin::users-permissions.user.me',
   'plugin::upload.content-api.upload',
 ];
