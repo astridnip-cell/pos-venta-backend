@@ -68,6 +68,8 @@ function publicOrder(order: any) {
     shippingCity: order.shippingCity,
     items: toItems(order.items),
     createdAt: order.createdAt,
+    // Última vez que cambió (por ejemplo, cuando el administrador lo marca como enviado)
+    updatedAt: order.updatedAt,
   };
 }
 
